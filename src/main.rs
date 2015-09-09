@@ -12,7 +12,7 @@ fn main() {
 
     match command {
         Some("init") => init_repository(),
-        Some("find") => find_repository_command(),
+        Some("find") => find_repository(),
         _ => print_help(),
     }
 }
@@ -33,13 +33,13 @@ fn init_repository() {
     }
 }
 
-fn find_repository_command() {
-    match find_repository() {
+fn find_repository() {
+    match find_repository_path() {
         Some(directory) => println!("Repository is at {:?}.", directory),
         None => println!("Repository not found."),
     }
 }
-fn find_repository() -> Option<Box<PathBuf>> {
+fn find_repository_path() -> Option<Box<PathBuf>> {
     let mut directory_box = Box::new(env::current_dir().unwrap());
     let success = walk_parent_directories(&mut *directory_box);
     if success {
