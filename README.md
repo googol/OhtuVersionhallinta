@@ -11,6 +11,8 @@ Enter the project directory and build the program using the command "cargo build
 
 The built program will be at "target\\release\\ohtuv"
 
+Prebuilt releases can be downloaded at: https://github.com/googol/OhtuVersionhallinta/releases
+
 # Usage
 ohtuv \<command>, where \<command> is one of:
 * init : initializes the repository in the current directory. Creates a directory ".ohtuv" to hold the repository.
