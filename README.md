@@ -15,6 +15,7 @@ The built program will be at "target\\release\\ohtuv"
 ohtuv \<command>, where \<command> is one of:
 * init : initializes the repository in the current directory. Creates a directory ".ohtuv" to hold the repository.
 * find : finds the current repository path by walking up the directory tree.
+* save \<file> : Saves the given file to the repository. \<file> must point to an existing file, not a directory. An initialized repository needs to exist in the current directory or any of its ancestors.
 
 # Original assignment (in Finnish)
 Ohjelmistokehittäjän yleissivistykseen kuuluu myös tietää, miten git toimii sisäiseltä rakenteeltaan. Lue https://git-scm.com/book/en/v2/Git-Internals-Git-Objects. 

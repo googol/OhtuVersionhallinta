@@ -3,6 +3,9 @@ name = "OhtuVersionhallinta"
 version = "0.1.0"
 authors = ["Miika Hänninen <miika.hanninen@gmail.com>"]
 
+[dependencies]
+time = "0.1"
+
 [[bin]]
 name = "ohtuv"
 path = "src/main.rs"
