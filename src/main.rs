@@ -82,26 +82,17 @@ fn find_repository() {
 
 fn find_repository_path() -> Option<Box<PathBuf>> {
     let mut directory_box = Box::new(env::current_dir().unwrap());
-    let success = walk_parent_directories(&mut *directory_box);
-    if success {
-        Some(directory_box)
-    } else {
-        None
-    }
-}
-
-fn walk_parent_directories(directory: &mut PathBuf) -> bool {
-    while directory.file_name() != None {
-        directory.push(".ohtuv");
-        if check_path_status(&directory) == PathStatus::Directory {
-            return true;
+    while directory_box.file_name() != None {
+        directory_box.push(".ohtuv");
+        if check_path_status(&*directory_box) == PathStatus::Directory {
+            return Some(directory_box);
         }
 
         // Popataan ensin .ohtuv pois, sitten uudestaan että päästään ylemmälle tasolle
-        directory.pop();
-        directory.pop();
+        directory_box.pop();
+        directory_box.pop();
     }
-    false
+    None
 }
 
 fn save_file(input_path : Option<&String>) {
