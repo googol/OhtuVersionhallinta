@@ -31,7 +31,7 @@ fn main() {
         Some("init") => init_repository(),
         Some("find") => find_repository(),
         Some("save") => save_file(args.get(2)),
-        Some("restore") => restore_file(&args),
+        Some("restore") => restore_file(&args[2..]),
         _ => print_help(),
     }
 }
@@ -139,7 +139,7 @@ fn file_name_in_repository(file_name: String) -> Result<PathBuf, &'static str> {
         })
 }
 
-fn restore_file(args: &Vec<String>) {
+fn restore_file(args: &[String]) {
     let result = parse_query_from_args(args).ok_or("Invalid arguments for restore command.")
         .and_then(find_matching_files);
 
@@ -171,14 +171,14 @@ fn format_timespec(timespec: &Timespec) -> String {
     }
 }
 
-fn parse_query_from_args(args: &Vec<String>) -> Option<RepositoryQuery> {
-    args.get(2)
+fn parse_query_from_args(args: &[String]) -> Option<RepositoryQuery> {
+    args.get(0)
         .and_then(|arg_three| parse_date(arg_three)
-                  .and_then(|(d, m, y)| args.get(3)
+                  .and_then(|(d, m, y)| args.get(1)
                             .and_then(|arg_four| parse_hours_minutes(arg_four)
                                       .map(|(h,min)| Timespec::Minute{day:d, month:m, year:y, hour:h, minute:min})
                                       .or_else(|| parse_hours(arg_four).map(|h| Timespec::Hour{day:d, month:m, year:y, hour:h}))
-                                      .and_then(|timespec| args.get(4)
+                                      .and_then(|timespec| args.get(2)
                                                 .map(|filename| RepositoryQuery {
                                                     file_name: filename.clone(),
                                                     time: timespec
