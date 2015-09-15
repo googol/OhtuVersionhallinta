@@ -153,11 +153,10 @@ fn restore_file(args: &[String]) {
         Ok(matches) => if matches.len() == 1 {
             println!("Single match found, restoring.");
             let &(ref input, RepositoryQuery { file_name: ref output, .. }) = &matches[0];
-            let copy_result = fs::copy(input, output).map_err(|_| "Cannot copy file.");
 
-            match copy_result {
+            match fs::copy(input, output) {
                 Ok(_) => println!("File restored."),
-                Err(message) => println!("Error: {}", message),
+                Err(_) => println!("Cannot copy file."),
             }
         } else {
             println!("Ambiguous match, please speficy a more accurate time to restore.");
