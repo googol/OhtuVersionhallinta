@@ -2,6 +2,7 @@ extern crate time;
 
 use std::env;
 use std::fs;
+use std::fs::ReadDir;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
@@ -228,10 +229,14 @@ fn find_matching_files(query: RepositoryQuery) -> Result<Vec<(String, Repository
     find_repository_path()
         .ok_or("Repository not found.")
         .and_then(|repository_path| fs::read_dir(*repository_path).map_err(|_| "Cannot read repository directory."))
-        .map(|iterator| iterator.filter_map(|current| current.ok()
-                                                             .and_then(|entry| entry.path().into_os_string().into_string().ok())
-                                                             .and_then(|path| get_query_if_matching(&path, &query)))
-                                .collect::<Vec<_>>())
+        .map(|iterator| collect_all_matching_files(iterator, query))
+}
+
+fn collect_all_matching_files(iterator: ReadDir, query: RepositoryQuery) -> Vec<(String, RepositoryQuery)> {
+    iterator.filter_map(|current| current.ok()
+                                         .and_then(|entry| entry.path().into_os_string().into_string().ok())
+                                         .and_then(|path| get_query_if_matching(&path, &query)))
+            .collect::<Vec<_>>()
 }
 
 fn get_query_if_matching(path: &String, query: &RepositoryQuery) -> Option<(String, RepositoryQuery)> {
