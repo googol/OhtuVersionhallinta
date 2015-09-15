@@ -2,7 +2,7 @@ extern crate time;
 
 use std::env;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 #[derive(Debug)]
@@ -17,6 +17,13 @@ enum Timespec {
 struct RepositoryQuery {
     file_name: String,
     time: Timespec,
+}
+
+#[derive(PartialEq)]
+enum PathStatus {
+    NotFound,
+    Directory,
+    File,
 }
 
 fn main() {
@@ -40,15 +47,29 @@ fn init_repository() {
     let mut directory = env::current_dir().unwrap();
     directory.push(".ohtuv");
 
-    if let Ok(_) = fs::metadata(&directory) {
-        println!("The repository has already been initialized.");
-        return;
+    match check_path_status(&directory) {
+        PathStatus::Directory => {
+            println!("The repository has already been initialized.");
+            return;
+        },
+        PathStatus::File => {
+            println!("A file called .ohtuv exists in the current folder. Please remove it to use this program.");
+            return;
+        },
+        _ => {},
     }
 
     println!("Initializing repository in {:?}", &directory);
     match fs::create_dir(&directory) {
         Ok(_) => println!("Finished"),
         Err(_) => println!("Failed. Check your directory permissions."),
+    }
+}
+
+fn check_path_status<P: AsRef<Path>>(path: P) -> PathStatus {
+    match fs::metadata(&path) {
+        Ok(metadata) => if metadata.is_file() { PathStatus::File } else { PathStatus::Directory },
+        Err(_) => PathStatus::NotFound,
     }
 }
 
@@ -72,7 +93,7 @@ fn find_repository_path() -> Option<Box<PathBuf>> {
 fn walk_parent_directories(directory: &mut PathBuf) -> bool {
     while directory.file_name() != None {
         directory.push(".ohtuv");
-        if let Ok(_) = fs::metadata(&directory) {
+        if check_path_status(&directory) == PathStatus::Directory {
             return true;
         }
 
@@ -100,13 +121,11 @@ fn get_validated_input_path(input_path: Option<&String>) -> Result<&String, &str
 }
 
 fn validate_path_points_to_file(file_name: &String) -> Result<&String, &str> {
-    fs::metadata(&file_name)
-        .map_err(|_| "The path given needs to point to a file.")
-        .and_then(|metadata| if metadata.is_file() {
-                Ok(file_name)
-            } else {
-                Err("You gave a directory as an argument. The path given needs to point to a file")
-            })
+    match check_path_status(file_name) {
+        PathStatus::File => Ok(file_name),
+        PathStatus::Directory => Err("You gave a directory as an argument. The path given needs to point to a file."),
+        PathStatus::NotFound => Err("The path given needs to point to a file."),
+    }
 }
 
 fn create_output_path(input_path: &String) -> Result<PathBuf, &str> {
@@ -133,9 +152,9 @@ fn file_name_in_repository(file_name: String) -> Result<PathBuf, &'static str> {
     find_repository_path()
         .ok_or("Repository not found.")
         .map(|repository_path| repository_path.join(file_name))
-        .and_then(|file_path| match fs::metadata(&file_path) {
-          Ok(_) => Err("The current version of the file already exists in the repository."),
-          Err(_) => Ok(file_path),
+        .and_then(|file_path| match check_path_status(&file_path) {
+            PathStatus::NotFound => Ok(file_path),
+            _ => Err("The current version of the file already exists in the repository."),
         })
 }
 
