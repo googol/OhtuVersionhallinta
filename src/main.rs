@@ -97,8 +97,8 @@ fn find_repository_path() -> Option<Box<PathBuf>> {
 
 fn save_file(input_path : Option<&String>) {
     let save_result = get_validated_input_path(input_path)
-                          .and_then(|input| create_output_path(input).map(|output| (input, output)))
-                          .and_then(|(input, output)| fs::copy(input, output).map_err(|_| "Copying the file into the repository failed."));
+                          .and_then(|input| create_output_path(input)
+                                    .and_then(|output| fs::copy(input, output).map_err(|_| "Copying the file into the repository failed.")));
 
     match save_result {
         Ok(_) => println!("File saved in the repository."),
