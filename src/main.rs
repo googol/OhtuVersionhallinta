@@ -238,17 +238,14 @@ fn find_matching_files(query: RepositoryQuery) -> Result<Vec<(String, Repository
 }
 
 fn get_query_if_matching(path: &String, query: &RepositoryQuery) -> Option<(String, RepositoryQuery)> {
-    let extracted = extract_file_name(path).and_then(|file_name| extract_timespec_for_file(&file_name).map(|timespec| (file_name, timespec)));
-
-    if let Ok((file_name, timespec)) = extracted {
-        if file_name.ends_with(&query.file_name) && timespecs_match(&timespec, &query.time) {
-            Some((path.clone(), RepositoryQuery { file_name: query.file_name.clone(), time: timespec}))
-        } else {
-            None
-        }
-    } else {
-        None
-    }
+    extract_file_name(path).ok()
+        .and_then(|file_name| extract_timespec_for_file(&file_name)
+                   .ok()
+                   .and_then(|timespec| if file_name.ends_with(&query.file_name) && timespecs_match(&timespec, &query.time) {
+                       Some((path.clone(), RepositoryQuery { file_name: query.file_name.clone(), time: timespec}))
+                   } else {
+                       None
+                   }))
 }
 
 fn extract_timespec_for_file(path: &String) -> Result<Timespec, &'static str> {
