@@ -108,15 +108,11 @@ fn save_file(input_path : Option<&String>) {
 
 fn get_validated_input_path(input_path: Option<&String>) -> Result<&String, &str> {
     input_path.ok_or("A file name is required with the save command.")
-              .and_then(validate_path_points_to_file)
-}
-
-fn validate_path_points_to_file(file_name: &String) -> Result<&String, &str> {
-    match check_path_status(file_name) {
-        PathStatus::File => Ok(file_name),
-        PathStatus::Directory => Err("You gave a directory as an argument. The path given needs to point to a file."),
-        PathStatus::NotFound => Err("The path given needs to point to a file."),
-    }
+              .and_then(|file_name| match check_path_status(file_name) {
+                    PathStatus::File => Ok(file_name),
+                    PathStatus::Directory => Err("You gave a directory as an argument. The path given needs to point to a file."),
+                    PathStatus::NotFound => Err("The path given needs to point to a file."),
+    })
 }
 
 fn create_output_path(input_path: &String) -> Result<PathBuf, &str> {
