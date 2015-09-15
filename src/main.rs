@@ -196,31 +196,28 @@ fn parse_query_from_args(args: &[String]) -> Option<RepositoryQuery> {
 }
 
 fn parse_date(date_arg: &String) -> Option<(i32, i32, i32)> {
-    let pieces = date_arg.split('.').map(|piece| i32::from_str(&piece)).collect::<Vec<_>>();
+    parse_n_integers(&date_arg, 5)
+        .map(|dmy| (dmy[0], dmy[1], dmy[2]))
+}
 
-    if pieces.len() != 3 {
+fn parse_n_integers(string: &String, n: usize) -> Option<Vec<i32>> {
+    let pieces = string.split('.')
+                       .take(n)
+                       .map(|piece| i32::from_str(&piece))
+                       .take_while(|result| result.is_ok())
+                       .map(|result| result.unwrap())
+                       .collect::<Vec<_>>();
+
+    if pieces.len() != n {
         return None;
     }
 
-    if let (&Ok(day), &Ok(month), &Ok(year)) = (&pieces[0], &pieces[1], &pieces[2]) {
-        Some((day, month, year))
-    } else {
-        None
-    }
+    Some(pieces)
 }
 
 fn parse_hours_minutes(time_arg: &String) -> Option<(i32, i32)> {
-    let pieces = time_arg.split('.').map(|piece| i32::from_str(&piece)).collect::<Vec<_>>();
-
-    if pieces.len() != 2 {
-        return None;
-    }
-
-    if let (&Ok(hour), &Ok(minutes)) = (&pieces[0], &pieces[1]) {
-        Some((hour, minutes))
-    } else {
-        None
-    }
+    parse_n_integers(&time_arg, 3)
+        .map(|hm| (hm[0], hm[1]))
 }
 
 fn parse_hours(time_arg: &String) -> Option<i32> {
@@ -249,18 +246,9 @@ fn get_query_if_matching(path: &String, query: &RepositoryQuery) -> Option<(Stri
 }
 
 fn extract_timespec_for_file(path: &String) -> Result<Timespec, &'static str> {
-    let pieces = path.split('.')
-                     .take(5)
-                     .map(|piece| i32::from_str(&piece))
-                     .take_while(|result| result.is_ok())
-                     .map(|result| result.unwrap())
-                     .collect::<Vec<_>>();
-
-    if pieces.len() < 5 {
-        Err("Invalid format")
-    } else {
-        Ok(Timespec::Minute{day: pieces[0], month: pieces[1], year: pieces[2], hour: pieces[3], minute: pieces[4]})
-    }
+    parse_n_integers(&path, 5)
+        .map(|pieces| Timespec::Minute{day: pieces[0], month: pieces[1], year: pieces[2], hour: pieces[3], minute: pieces[4]} )
+        .ok_or("Invalid format")
 }
 
 fn timespecs_match(file_timespec_original: &Timespec, query_timespec: &Timespec) -> bool {
