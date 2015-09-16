@@ -45,25 +45,34 @@ fn main() {
 }
 
 fn init_repository() {
-    let mut directory = env::current_dir().unwrap();
-    directory.push(".ohtuv");
+    let result = get_new_repository_path()
+        .and_then(filter_existing_paths)
+        .and_then(|repository_path| {
+            println!("Initializing repository in {:?}", repository_path);
+            fs::create_dir(&repository_path).map_err(|_| "Cannot create directory. Check your directory permissions.")
+        });
 
-    match check_path_status(&directory) {
-        PathStatus::Directory => {
-            println!("The repository has already been initialized.");
-            return;
-        },
-        PathStatus::File => {
-            println!("A file called .ohtuv exists in the current folder. Please remove it to use this program.");
-            return;
-        },
-        _ => {},
+    match result {
+        Ok(_) => println!("Finished"),
+        Err(message) => println!("Error: {}", message),
+    }
+}
+
+fn get_new_repository_path() -> Result<PathBuf, &'static str> {
+    let mut directory = env::current_dir();
+
+    if let Ok(path) = directory.as_mut() {
+        path.push(".ohtuv")
     }
 
-    println!("Initializing repository in {:?}", &directory);
-    match fs::create_dir(&directory) {
-        Ok(_) => println!("Finished"),
-        Err(_) => println!("Failed. Check your directory permissions."),
+    directory.map_err(|_| "Cannot find current directory.")
+}
+
+fn filter_existing_paths(path: PathBuf) -> Result<PathBuf, &'static str> {
+    match check_path_status(&path) {
+        PathStatus::Directory => Err("The repository has already been initialized."),
+        PathStatus::File => Err("A file called .ohtuv exists in the current folder. Please remove it first."),
+        _ => Ok(path),
     }
 }
 
